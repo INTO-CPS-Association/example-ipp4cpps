@@ -1,0 +1,12 @@
+time,step-size,{WH}.WHInstance.robot_in1,{WH}.WHInstance.robot_in2,{WH}.WHInstance.trynumber,{pt}.pt.leaveStationA,{pt}.pt.leaveStationB,{pt}.pt.leaveStationC,{pt}.pt.p_ID,{pt}.pt.speedA,{pt}.pt.speedB,{pt}.pt.speedC,{pt}.pt.w_in1,{pt}.pt.w_in2,{pt}.pt.w_in3,{pt}.pt.w_valid,{r}.robo_Instance.r_out,{ts}.testStation.t_out,{ts}.testStation.t_status,{ts}.testStation.testResult,{w1}.wagon1.pos,{w1}.wagon2.pos,{w1}.wagon3.pos
+0.0,0.0,0,0,0,false,false,false,0,1,1,1,0,0,0,false,0,0,0,true,0,0,0
+1.0,1.0,0,0,0,false,false,false,0,1,1,1,0,0,0,false,0,0,0,true,21,16,11
+2.0,1.0,0,0,0,false,false,false,0,1,1,1,0,0,0,false,0,0,0,true,21,16,11
+3.0,1.0,0,0,0,false,false,false,0,1,1,1,0,0,0,false,0,0,0,true,21,16,11
+4.0,1.0,0,0,0,false,false,false,0,1,1,1,0,0,0,false,0,0,0,true,21,16,11
+5.0,1.0,0,0,0,false,false,false,0,1,1,1,0,0,0,false,0,0,0,true,21,16,11
+6.0,1.0,0,0,0,false,false,false,0,1,1,1,0,0,0,false,0,0,0,true,21,16,11
+7.0,1.0,0,0,0,false,false,false,0,1,1,1,0,0,0,false,0,0,0,true,21,16,11
+8.0,1.0,0,0,0,false,false,false,0,1,1,1,0,0,0,false,0,0,0,true,21,16,11
+9.0,1.0,0,0,0,false,false,false,0,1,1,1,0,0,0,false,0,0,0,true,21,16,11
+10.0,1.0,0,0,0,false,false,false,0,1,1,1,0,0,0,false,0,0,0,true,21,16,11

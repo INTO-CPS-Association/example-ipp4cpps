@@ -1,0 +1,1 @@
+{"startTime":0,"endTime":100,"multimodel_path":"Multi-models\\initial-model-connections\\mm.json","livestream":{"{WH}.WHInstance":["w_out"],"{PT}.PTInstance":["p_ID","w_in1","w_in2","w_in3"]},"visible":false,"loggingOn":true,"overrideLogLevel":"DEBUG","enableAllLogCategoriesPerInstance":true,"algorithm":{"type":"fixed-step","size":4}}
