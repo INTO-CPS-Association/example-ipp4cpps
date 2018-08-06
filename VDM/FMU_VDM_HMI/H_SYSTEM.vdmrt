@@ -1,0 +1,18 @@
+system H_SYSTEM
+
+instance variables
+
+
+public static hwi: HardwareInterface := new HardwareInterface();
+
+public static hmi:		Unit_HMI					:= new Unit_HMI(hwi.h_command,hwi.commandAck,hwi.wagonPositions,hwi.ack_WAREHOUSE,hwi.ack_WAITING_ROOM, hwi.ack_WAGON, hwi.ack_TEST_STATION, hwi.ack_END_USER, hwi.perturb_stat);
+
+cpu: CPU := new CPU (<FCFS>,1E6);
+
+operations
+H_SYSTEM: () ==> H_SYSTEM
+H_SYSTEM() == (
+	cpu.deploy(hmi);
+)
+
+end H_SYSTEM

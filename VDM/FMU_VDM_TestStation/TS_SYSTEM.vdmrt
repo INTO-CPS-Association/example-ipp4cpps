@@ -1,0 +1,19 @@
+system TS_SYSTEM
+
+instance variables
+
+
+public static hwi: HardwareInterface := new HardwareInterface();
+
+public static testStation:	Unit_TestStation	:= new Unit_TestStation(hwi.t_ID,hwi.t_valid,hwi.t_out,hwi.t_status,hwi.testResult,hwi.perturb_t);
+
+cpu: CPU := new CPU (<FCFS>,1E6);
+
+operations
+
+TS_SYSTEM: () ==> TS_SYSTEM
+TS_SYSTEM() == (
+	cpu.deploy(testStation);
+)
+
+end TS_SYSTEM

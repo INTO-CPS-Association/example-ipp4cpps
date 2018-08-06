@@ -1,0 +1,25 @@
+--##	EXPORT	1b32a8b34da94f7e9686efe7e47eaf8a6469fbe0	FMU_VDM_TestStation.fmu	2017-07-03 13:43:10	tool-wrapper	{"name":"fmu-import-export","version":"0.1.7-SNAPSHOT"}
+--##	EXPORT	e2135b2fbc39d80c25578fa66a5ea7188938828	FMU_VDM_TestStation.fmu	2017-07-03 12:12:10	tool-wrapper	{"name":"fmu-import-export","version":"0.1.7-SNAPSHOT"}
+--##	EXPORT	57912614ef2c1acd2a96e8eaab8f125284b2a867	FMU_VDM_TestStation.fmu	2017-06-03 14:23:01	tool-wrapper	{"name":"fmu-import-export","version":"0.1.6"}
+--##	EXPORT	99f266cb47cdbf35e27bb91a529b0e37c0127676	FMU_VDM_TestStation.fmu	2017-06-03 13:53:42	tool-wrapper	{"name":"fmu-import-export","version":"0.1.6"}
+--##	EXPORT	f84b282e7540097b1110a8802c30533ac91eb661	FMU_VDM_TestStation.fmu	2017-06-03 11:51:14	tool-wrapper	{"name":"fmu-import-export","version":"0.1.6"}
+class HardwareInterface
+
+instance variables
+/*t = test station */
+-- @ interface: type = input, name="t_ID";
+public t_ID: IntPort := new IntPort(0);
+-- @ interface: type = input, name="t_valid";
+public t_valid: BoolPort := new BoolPort(false);
+-- @ interface: type = output, name="t_out";
+public t_out: IntPort := new IntPort(0);
+-- @ interface: type = output, name="t_status";
+public t_status: IntPort := new IntPort(0);
+-- @ interface: type = output, name="testResult";
+public testResult: BoolPort := new BoolPort(true);
+
+-- @ interface: type = output, name="perturb_t";
+public perturb_t: IntPort := new IntPort(0);
+
+
+end HardwareInterface

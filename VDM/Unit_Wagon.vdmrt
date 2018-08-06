@@ -1,0 +1,111 @@
+class Unit_Wagon
+
+instance variables
+
+pos:		IntPort;
+speed: 	IntPort;
+
+leaveStation: BoolPort;
+
+pos_front: IntPort;
+pos_behind: IntPort;
+
+perturb_wagon: IntPort;
+
+temp_pos: nat := 0;
+distance_to_pr_w: int := 1;
+distance_to_w_behind: int := 1;
+
+curr_speed : nat := 0;
+
+operations
+
+public Unit_Wagon: IntPort * IntPort * IntPort * BoolPort * IntPort * IntPort * IntPort  ==> Unit_Wagon
+Unit_Wagon(start_pos,pos_,speed_, bool1,w_pos_front,nx_w_pos,perturb_wag) == (
+  pos   := pos_;	
+  pos.setValue(start_pos.getValue());
+	speed := speed_;
+	
+	leaveStation := bool1;
+	
+	pos_front := w_pos_front;
+	pos_behind := nx_w_pos;
+	
+	perturb_wagon := perturb_wag;
+);
+
+public Step: () ==> ()
+Step() == (
+		dcl curr_pos: nat := pos.getValue();
+		dcl w_pos_front: nat := pos_front.getValue();
+		dcl w_pos_beh: nat := pos_behind.getValue();
+		dcl req_speed: nat := speed.getValue();
+		dcl leaveStationCommand: bool := leaveStation.getValue();
+		
+		if(curr_speed = 0) then
+					curr_speed := req_speed;
+		
+		distance_to_w_behind := if(curr_pos < w_pos_beh)
+											then GlobalTypes`TRACK_LENGTH + curr_pos - w_pos_beh
+											else curr_pos - w_pos_beh;
+		
+		curr_speed := if (distance_to_w_behind <= curr_speed * TIME_UNIT + 1) and 
+										 (curr_pos > GlobalTypes`LOADING_STATION) and
+										 (curr_pos < GlobalTypes`TESTING_STATION)
+									then curr_speed + DELTA_SPEED
+									else req_speed;
+												
+		
+		
+		if (   curr_pos <> GlobalTypes`LOADING_STATION and curr_pos <> GlobalTypes`TESTING_STATION ) or
+			 ( ( curr_pos =  GlobalTypes`LOADING_STATION or curr_pos = GlobalTypes`TESTING_STATION ) and leaveStationCommand = true ) then
+		(
+				if curr_pos = GlobalTypes`LOADING_STATION or curr_pos = GlobalTypes`TESTING_STATION then
+					 curr_speed := req_speed;
+				
+				distance_to_pr_w := if(curr_pos < w_pos_front)
+				               			then w_pos_front - curr_pos
+			                 			else GlobalTypes`TRACK_LENGTH + w_pos_front - curr_pos;
+				temp_pos := if distance_to_pr_w > curr_speed*TIME_UNIT
+														then (curr_pos + curr_speed*TIME_UNIT) mod GlobalTypes`TRACK_LENGTH
+			                 			else ( w_pos_front - 1 ) mod GlobalTypes`TRACK_LENGTH;
+			                 			
+			  /*if distance_to_pr_w <= curr_speed * TIME_UNIT and 
+			  	 distance_to_pr_w < GlobalTypes`TESTING_STATION - temp_pos and
+			  	 curr_speed > prev_wagon_speed.getValue() then
+			  	 prev_wagon_speed.setValue(curr_speed);
+			  	 */
+		);
+		
+		
+		if ( w_pos_front <> GlobalTypes`LOADING_STATION ) and
+			 ( curr_pos <  GlobalTypes`LOADING_STATION ) and
+		   ( temp_pos >= GlobalTypes`LOADING_STATION ) then
+		(
+				temp_pos := GlobalTypes`LOADING_STATION;
+		);
+		
+		if ( w_pos_front <> GlobalTypes`TESTING_STATION ) and
+			 ( curr_pos <  GlobalTypes`TESTING_STATION ) and
+		   ( temp_pos >= GlobalTypes`TESTING_STATION ) then
+		(
+				temp_pos := GlobalTypes`TESTING_STATION;
+		);
+
+		if floor(GlobalTypes`debugConsoleMsg / 8) mod 2 = 1 then
+		IO`printf("%s\tWagon %s %s position:\t %s %s %s %s\n", [GlobalTypes`roundTimeToTheSecond(time),temp_pos, w_pos_front, curr_pos, distance_to_pr_w, curr_speed,leaveStationCommand]);
+						
+		pos.setValue(temp_pos);
+		
+		
+)
+
+thread 
+periodic(1e10,0,0,0)(Step)
+
+values
+
+TIME_UNIT = 1;
+DELTA_SPEED = 3;
+
+end Unit_Wagon

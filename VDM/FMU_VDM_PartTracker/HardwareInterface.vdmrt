@@ -1,0 +1,89 @@
+--##	EXPORT	498a3568a9d9c80e3929885f9c30ae5042336d5e	FMU_VDM_PartTracker.fmu	2017-29-06 14:15:29	c-code	{"name":"fmu-import-export","version":"0.2.4"}
+--##	EXPORT	9ba07abf8e74644ff73bae0a6a683f14fba6c595	FMU_VDM_PartTracker.fmu	2017-29-06 14:12:53	c-code	{"name":"fmu-import-export","version":"0.2.4"}
+--##	EXPORT	e1f72956eaeff107449794c26c1406aa9de4fce7	FMU_VDM_PartTracker.fmu	2017-12-05 15:59:53	c-code	{"name":"fmu-import-export","version":"0.2.4"}
+--##	EXPORT	3537a7557998dca39b947722d16a67167209a1e1	FMU_VDM_PartTracker.fmu	2017-07-03 12:11:57	tool-wrapper	{"name":"fmu-import-export","version":"0.1.7-SNAPSHOT"}
+--##	EXPORT	e0329516e9e6807ac8c2bdb236715b82e1f9dd5a	FMU_VDM_PartTracker.fmu	2017-06-03 15:18:06	tool-wrapper	{"name":"fmu-import-export","version":"0.1.6"}
+--##	EXPORT	932e66fae57002268c523608a6a2e11fc7cccd18	FMU_VDM_PartTracker.fmu	2017-06-03 14:21:47	tool-wrapper	{"name":"fmu-import-export","version":"0.1.6"}
+--##	EXPORT	f6adb6dfdcf5e70b5d1a211a1aff69d906355225	FMU_VDM_PartTracker.fmu	2017-06-03 14:21:09	tool-wrapper	{"name":"fmu-import-export","version":"0.1.6"}
+class HardwareInterface
+
+instance variables
+
+-- @ interface: type = output, name="commandAck";
+public commandAck: IntPort := new IntPort(0);
+-- @ interface: type = input, name="h_command";
+public h_command: IntPort := new IntPort(0);
+
+-- @ interface: type = output, name="wagonPositions";
+public wagonPositions: IntPort := new IntPort(0);
+
+-- @ interface: type = output, name="ack_WAREHOUSE";
+public ack_WAREHOUSE: IntPort := new IntPort(0);
+-- @ interface: type = output, name="ack_WAITING_ROOM";
+public ack_WAITING_ROOM: IntPort := new IntPort(0);
+-- @ interface: type = output, name="ack_WAGON";
+public ack_WAGON: IntPort := new IntPort(0);
+-- @ interface: type = output, name="ack_TEST_STATION";
+public ack_TEST_STATION: IntPort := new IntPort(0);
+-- @ interface: type = output, name="ack_END_USER";
+public ack_END_USER: IntPort := new IntPort(0);
+
+-- @ interface: type = output, name="p_ID";
+public p_ID: IntPort := new IntPort(0);
+
+-- @ interface: type = output, name="w_valid";
+public w_valid: BoolPort := new BoolPort(false);
+-- @ interface: type = output, name="w_in1";
+public w_in1: IntPort := new IntPort(0);
+-- @ interface: type = output, name="w_in2";
+public w_in2: IntPort := new IntPort(0);
+-- @ interface: type = output, name="w_in3";
+public w_in3: IntPort := new IntPort(0);
+-- @ interface: type = input, name="w_out";
+public w_out: IntPort := new IntPort(0);
+
+-- @ interface: type = input, name="posA";
+public posA: IntPort := new IntPort(2);
+-- @ interface: type = input, name="posB";
+public posB: IntPort := new IntPort(1);
+-- @ interface: type = input, name="posC";
+public posC: IntPort := new IntPort(0);
+-- @ interface: type = output, name="speedA";
+public speedA: IntPort := new IntPort(1); --GlobalTypes`DEFAULT_SPEED);
+-- @ interface: type = output, name="speedB";
+public speedB: IntPort := new IntPort(1); --GlobalTypes`DEFAULT_SPEED);
+-- @ interface: type = output, name="speedC";
+public speedC: IntPort := new IntPort(1); --GlobalTypes`DEFAULT_SPEED);
+-- @ interface: type = output, name="leaveStationA";
+public leaveStationA: BoolPort := new BoolPort(false);
+-- @ interface: type = output, name="leaveStationB";
+public leaveStationB: BoolPort := new BoolPort(false);
+-- @ interface: type = output, name="leaveStationC";
+public leaveStationC: BoolPort := new BoolPort(false);
+
+-- @ interface: type = output, name="t_ID";
+public t_ID: IntPort := new IntPort(0);
+-- @ interface: type = output, name="t_valid";
+public t_valid: BoolPort := new BoolPort(false);
+-- @ interface: type = input, name="t_out";
+public t_out: IntPort := new IntPort(0);
+-- @ interface: type = input, name="t_status";
+public t_status: IntPort := new IntPort(0);
+-- @ interface: type = input, name="testResult";
+public testResult: BoolPort := new BoolPort(true);
+
+-- @ interface: type = input, name="perturb_wagA";
+public perturb_wagA: IntPort := new IntPort(0);
+-- @ interface: type = input, name="perturb_wagB";
+public perturb_wagB: IntPort := new IntPort(0);
+-- @ interface: type = input, name="perturb_wagC";
+public perturb_wagC: IntPort := new IntPort(0);
+-- @ interface: type = input, name="perturb_w";
+public perturb_w: IntPort := new IntPort(0);
+-- @ interface: type = input, name="perturb_t";
+public perturb_t: IntPort := new IntPort(0);
+-- @ interface: type = output, name="perturb_stat";
+public perturb_stat: IntPort := new IntPort(0);
+
+
+end HardwareInterface

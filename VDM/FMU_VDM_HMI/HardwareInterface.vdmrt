@@ -1,0 +1,33 @@
+--##	EXPORT	b9945e21fcfd00a427316eda811f9e9eed8d453c	FMU_VDM_Robot.fmu	2017-07-03 12:12:02	tool-wrapper	{"name":"fmu-import-export","version":"0.1.7-SNAPSHOT"}
+--##	EXPORT	535f302c0870437988a6e2b9364688b3ea4e0b30	FMU_VDM_Robot.fmu	2017-06-03 14:24:23	tool-wrapper	{"name":"fmu-import-export","version":"0.1.6"}
+--##	EXPORT	38709e6bbd0e5d26a915e5d34dc60b13cac9494b	FMU_VDM_Robot.fmu	2017-06-03 12:07:17	tool-wrapper	{"name":"fmu-import-export","version":"0.1.6"}
+--##	EXPORT	f84b282e7540097b1110a8802c30533ac91eb661	FMU_VDM_TestStation.fmu	2017-06-03 11:51:14	tool-wrapper	{"name":"fmu-import-export","version":"0.1.6"}
+class HardwareInterface
+
+instance variables
+
+/*h = HMI*/
+-- @ interface: type = input, name="commandAck";
+public commandAck: IntPort := new IntPort(0);
+-- @ interface: type = output, name="h_command";
+public h_command: IntPort := new IntPort(0);
+
+-- @ interface: type = input, name="wagonPositions";
+public wagonPositions: IntPort := new IntPort(0);
+
+-- @ interface: type = input, name="ack_WAREHOUSE";
+public ack_WAREHOUSE: IntPort := new IntPort(0);
+-- @ interface: type = input, name="ack_WAITING_ROOM";
+public ack_WAITING_ROOM: IntPort := new IntPort(0);
+-- @ interface: type = input, name="ack_WAGON";
+public ack_WAGON: IntPort := new IntPort(0);
+-- @ interface: type = input, name="ack_TEST_STATION";
+public ack_TEST_STATION: IntPort := new IntPort(0);
+-- @ interface: type = input, name="ack_END_USER";
+public ack_END_USER: IntPort := new IntPort(0);
+
+-- @ interface: type = input, name="perturb_stat";
+public perturb_stat: IntPort := new IntPort(0);
+
+
+end HardwareInterface

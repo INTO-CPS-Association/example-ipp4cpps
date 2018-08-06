@@ -1,0 +1,32 @@
+class World
+
+instance variables
+
+public static done: bool := false
+
+operations
+
+public Run: () ==> ()
+Run() == ( 
+	USBMaker`timer := new Timer(3500);
+
+	start(USBMaker`hmi);
+	start(USBMaker`tracker);
+	start(USBMaker`warehouse);
+	start(USBMaker`robot);
+	start(USBMaker`wagonA);
+	start(USBMaker`wagonB);
+	start(USBMaker`wagonC);
+	start(USBMaker`testStation);
+	
+	start(USBMaker`timer);
+  block();
+);
+
+private block : () ==>()
+block() == skip;
+
+sync
+per block => done;
+  
+end World

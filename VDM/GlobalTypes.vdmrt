@@ -1,0 +1,198 @@
+class GlobalTypes
+
+types
+
+public OrderID = nat; /* value 0 reserved (and used to define the speed of empty wagons), real order IDs start from 1 */
+
+/* Colour is defined both as int and as string
+   0 = [0,0,0] = Black;
+   1 = [0,0,1] = Blue;
+   2 = [0,1,0] = Green;
+   3 = [0,1,1] = Cyan;
+   4 = [1,0,0] = Red;
+   5 = [1,0,1] = Magenta;
+   6 = [1,1,0] = Yellow;
+   7 = [1,1,1] = White;
+*/
+public ColourInt = nat 
+inv colourint == (colourint <= 7);
+public ColourStr = <Black> | <Blue> | <Green> | <Cyan> | <Red> | <Magenta> | <Yellow> | <White>;
+
+public KindInt = nat1 
+inv k == k <= 4; /*1, 2, 3, 4; consistent with warehouse STAGEs*/
+public KindStr = <Left> | <Middle> | <Right> | <Whole>;
+
+public OptionInt = nat /* value 0 reserved */
+inv optionint == (optionint <= MAX_SPEED); /* speed values */
+
+public OrderTime = nat;
+public CancelTime = nat;
+
+public StatusInt = nat;
+public StatusStr  = <UNDEFINED> | <ORDERED> | <WAREHOUSE> | <WAITING_ROOM> | <WAGON> | <TEST_STATION> | <END_USER> | <CANCELLED>;
+
+functions
+
+public roundTimeToTheSecond: nat -> nat
+		roundTimeToTheSecond(t) == floor(t/1e9);
+
+public Kind_Int2Str: KindInt -> KindStr
+		Kind_Int2Str(k) == 
+							cases k:
+							   1 -> <Left>,
+								 2 -> <Middle>,
+								 3 -> <Right>,
+								 4 -> <Whole>
+							end;
+							
+
+public Kind_Str2Int: KindStr -> KindInt
+		Kind_Str2Int(k) == 
+							cases k:
+							  <Left>   ->  1,
+								<Middle> ->  2,
+								<Right>  ->  3,
+								<Whole>  ->  4
+							end;
+
+public Colour_Int2Str: ColourInt -> ColourStr
+		Colour_Int2Str(k) == 
+							cases k:
+								 0 -> <Black>,
+								 1 -> <Blue>,
+								 2 -> <Green>,
+								 3 -> <Cyan>,
+								 4 -> <Red>,
+								 5 -> <Magenta>,
+								 6 -> <Yellow>,
+								 7 -> <White>
+							end;
+							
+
+public Colour_Str2Int: ColourStr -> ColourInt
+		Colour_Str2Int(k) == 
+							cases k:
+							   <Black>   -> 0,
+								 <Blue>    -> 1,
+								 <Green>   -> 2,
+								 <Cyan>    -> 3,
+								 <Red>     -> 4,
+								 <Magenta> -> 5,
+								 <Yellow>  -> 6,
+								 <White>   -> 7
+							end;							
+								
+public composeCommand: nat * nat * OptionInt * ColourInt * ColourInt * ColourInt -> nat
+		composeCommand(command,id,opt,c1,c2,c3) ==
+						/*(2^16)*/ 65536*id + 
+						/*(2^14)*/ 16384*command + 
+						/*(2^11)*/  2048*c1 +
+						/*(2^ 8)*/   256*c2 +
+						/*(2^ 5)*/    32*c3 +
+						               opt;
+/*  1000000000000001       01 111 000 111 10101 
+   order id 16 bits; command; c1; c2; c3;  opt. */
+
+public composeAnswer: nat * nat * nat -> nat
+		composeAnswer(command,id,status) ==
+						/*(2^16)*/ 65536*id + 
+						/*(2^14)*/ 16384*command + 
+						           status;
+/*  1000000000000001       01 10000000000001 
+   order id 16 bits; command; item status... */
+
+
+public composePositions: nat * nat * nat -> nat
+		composePositions(pos1,pos2,pos3) ==
+						/*(2^20)*/	1024*1024*pos1 +
+						/*(2^10)*/			 1024*pos2 +
+																	pos3;
+																	
+
+public getIdFromComposedMessage: nat -> nat
+	getIdFromComposedMessage(mesaj) == mesaj div 65536;
+	
+public getCmdFromComposedMessage: nat -> nat
+	getCmdFromComposedMessage(mesaj) == (mesaj mod 65536) div 16384;
+
+public getStatusFromComposedMessage: nat -> nat
+	getStatusFromComposedMessage(mesaj) == mesaj mod 16384;
+
+public decodeOpt: nat -> nat
+			decodeOpt(n) == n mod 32;
+
+public decodeC3: nat -> nat
+			decodeC3(n) == (n div 32) mod 8;
+
+public decodeC2: nat -> nat
+			decodeC2(n) == (n div 256) mod 8;
+
+public decodeC1: nat -> nat
+			decodeC1(n) == (n div 2048) mod 8;
+
+
+public IntToStatus: StatusInt -> StatusStr
+		IntToStatus(k) == 
+							cases k:
+								 0 -> <UNDEFINED>,
+								 1 -> <ORDERED>,
+								 2 -> <WAREHOUSE>,
+								 3 -> <WAITING_ROOM>,
+								 4 -> <WAGON>,
+								 5 -> <TEST_STATION>,
+								 6 -> <END_USER>,
+								 7 -> <CANCELLED>
+							end;
+
+public StatusToInt: StatusStr -> StatusInt
+		StatusToInt(k) == 
+							cases k:
+								 <UNDEFINED>		-> 0,
+								 <ORDERED>			-> 1,
+								 <WAREHOUSE>		-> 2,
+								 <WAITING_ROOM>	-> 3,
+								 <WAGON>				-> 4,
+								 <TEST_STATION>	-> 5,
+								 <END_USER>			-> 6,
+								 <CANCELLED>		-> 7 
+							end;
+
+public composePerturbStatus: nat * nat * nat * nat * nat -> nat
+		composePerturbStatus(perturb_w,perturb_wagA,perturb_wagB,perturb_wagC,perturb_t) ==
+						/*(2^8)*/ 128*perturb_w + 
+						/*(2^6)*/  64*perturb_wagA +
+						/*(2^4)*/  16*perturb_wagB +
+						/*(2^2)*/   4*perturb_wagC + 
+						             perturb_t;
+/*  11 11 11 11 11 
+   every two bits = perturbation level for one component... 
+   warehouse - wagonA - wagonB - wagonC - testStation */
+
+values
+
+public BUSY:nat = 1;
+public FREE:nat = 0;
+public PERTURB_NONE:nat = 0;
+public PERTURB_LOW :nat = 1;
+public PERTURB_MED :nat = 2;
+public PERTURB_HIGH:nat = 3;
+
+
+public LOADING_STATION :nat =  26; -- min acceptable value: MAX_SPEED + 1; max acceptable value: TRACK_LENGTH - MAX_SPEED - 1
+public TESTING_STATION :nat =  70; -- min acceptable value: MAX_SPEED + 1; max acceptable value: TRACK_LENGTH - MAX_SPEED - 1
+public TRACK_LENGTH    :nat = 100;
+public DEFAULT_SPEED 	 :nat =   5;	
+public MAX_SPEED			 :nat =  floor(TRACK_LENGTH/4);
+
+/*-----------------------------*\
+|		00000 = no debug info
+|		00001 = only part tracker
+|		00010 = only warehouse
+|		00100 = only robot
+|		01000 = only wagons
+|		10000 = only test station
+|		11111 = all debug info
+\*-----------------------------*/					
+public debugConsoleMsg =  3+16;
+							
+end GlobalTypes

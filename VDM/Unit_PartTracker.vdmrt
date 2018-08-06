@@ -1,0 +1,455 @@
+class Unit_PartTracker
+
+types
+
+USBItem = GlobalTypes`OrderTime *
+					GlobalTypes`OptionInt * 
+          GlobalTypes`ColourInt * 
+          GlobalTypes`ColourInt * 
+          GlobalTypes`ColourInt 
+          
+instance variables
+
+OrdersHaveBeenRead: bool := false;
+bla0: nat :=0;
+bla1: nat :=0;
+bla2: nat :=0;
+bla3: nat :=0;
+bla4: nat :=0;
+composedCommand: nat := 0;
+
+USBitems: map GlobalTypes`OrderID to USBItem := {|->};
+USBlocs : map GlobalTypes`OrderID to GlobalTypes`StatusStr := { 0 |-> <UNDEFINED>};
+USBwagons : map GlobalTypes`OrderID to USB_Wagons := {|->};
+USBoptions : map GlobalTypes`OrderID to GlobalTypes`OptionInt := { 0 |-> GlobalTypes`DEFAULT_SPEED};
+USBordervalidity: map GlobalTypes`OrderID to bool := {0 |-> false};
+WagonsLoads : map nat to GlobalTypes`OrderID := { 1|->0, 2|->0, 3|->0 };
+
+
+hmi_command:	IntPort; /*HMI command/change/query*/
+item_status:	IntPort; /*Part Tracker response to HMI (item status)*/
+wagonPositions: IntPort; /*coded wagon positions for HMI*/
+
+item_in_WAREHOUSE 		:	IntPort;
+item_in_WAITING_ROOM 	:	IntPort;
+item_in_WAGON 				:	IntPort;
+item_in_TEST_STATION 	:	IntPort;
+item_in_END_USER 			:	IntPort;
+
+tracker_ID:	IntPort; /*order ID*/
+WOrderValid: BoolPort; /*order valid or cancelled*/
+warehouse_in1: 	IntPort; /*colour <LEFT>*/
+warehouse_in2: 	IntPort; /*colour <MIDDLE>*/
+warehouse_in3: 	IntPort; /*colour <RIGHT>*/
+warehouse_out:	IntPort; /*order ID*/
+
+wagonA_pos: IntPort;
+wagonB_pos: IntPort;
+wagonC_pos: IntPort;
+wagonA_speed: IntPort;
+wagonB_speed: IntPort;
+wagonC_speed: IntPort;
+wagonA_leaveStationCommand: BoolPort;
+wagonB_leaveStationCommand: BoolPort;
+wagonC_leaveStationCommand: BoolPort;
+
+test_ID:	IntPort; /* ID of tested unit*/
+TOrderValid: BoolPort; /*order valid or cancelled*/
+test_out: IntPort; /* order ID return */
+test_status: IntPort; /* FREE / BUSY */
+test_result: BoolPort; /* item OK / NOK*/
+
+perturb_warehouse : IntPort;
+perturb_wagonA : IntPort;
+perturb_wagonB : IntPort;
+perturb_wagonC : IntPort;
+perturb_teststation : IntPort;
+perturb_status : IntPort;
+
+Wagons_pos:    seq of nat := [0,0,0];
+Wagons_speeds: seq of nat := [0,0,0];
+wagonFree: bool := true;
+
+/*currid: GlobalTypes`OrderID := 1; /* value 0 reserved (and used to define the speed of empty wagons), real order IDs start from 1 */
+
+types
+
+USB_Wagons_Str = <NONE> | <WAGON_A> | <WAGON_B> | <WAGON_C>;
+USB_Wagons = nat;
+
+operations
+
+public Unit_PartTracker: 	IntPort * IntPort * IntPort /*HMI command, Part Tracker status reply to HMI, wagonPositions for HMI*/
+												* IntPort * IntPort * IntPort * IntPort * IntPort /*item in WAREHOUSE / WAITING_ROOM / WAGON / TEST_STATION / END_USER */
+												* IntPort * BoolPort /*Part Tracker ID, order still valid*/
+												* IntPort * IntPort * IntPort * IntPort /*Warehouse colours and output*/ 
+												* IntPort * IntPort * IntPort /*Wagon positions*/
+												* IntPort * IntPort * IntPort /*Wagon speeds*/
+												* BoolPort * BoolPort * BoolPort /*Leave Station commands*/ 
+												* IntPort * BoolPort /*Test Station ID, order still valid */
+												* IntPort * IntPort * BoolPort /* output(order ID return), status(FREE/BUSY) and result*/ 
+												* IntPort * IntPort * IntPort * IntPort * IntPort * IntPort /*perturbation status (individual and collective)*/
+												==> Unit_PartTracker
+												
+--Unit_PartTracker(p_ID, w_valid,w_in1,w_in2,w_in3,w_out,posA,posB,posC,speedA,speedB,speedC,leaveStationA,leaveStationB,leaveStationC,t_ID,t_valid,t_out,t_status,testResult);												
+												
+Unit_PartTracker(h_command,p_status,wagonPoss,ack_WAREHOUSE,ack_WAITING_ROOM, ack_WAGON, ack_TEST_STATION, ack_END_USER,p_ID,w_valid,w_in1,w_in2,w_in3,w_out, posA,posB,posC,speedA,speedB,speedC,leaveStationA,leaveStationB,leaveStationC,t_ID,t_valid,t_out,t_stat,res,perturb_w,perturb_wagA,perturb_wagB,perturb_wagC,perturb_t,perturb_stat) == (
+	hmi_command := h_command;
+	item_status := p_status;
+	wagonPositions := wagonPoss;
+	item_in_WAREHOUSE := ack_WAREHOUSE;
+	item_in_WAITING_ROOM := ack_WAITING_ROOM;
+	item_in_WAGON := ack_WAGON;
+	item_in_TEST_STATION := ack_TEST_STATION;
+	item_in_END_USER := ack_END_USER;
+	tracker_ID  := p_ID;
+	WOrderValid := w_valid;
+	warehouse_in1  := w_in1;
+	warehouse_in2  := w_in2;
+	warehouse_in3  := w_in3;
+	warehouse_out  := w_out;
+	wagonA_pos := posA;
+	wagonB_pos := posB;
+	wagonC_pos := posC;
+	wagonA_speed := speedA;
+	wagonB_speed := speedB;
+	wagonC_speed := speedC;
+	wagonA_leaveStationCommand := leaveStationA;
+	wagonB_leaveStationCommand := leaveStationB;
+	wagonC_leaveStationCommand := leaveStationC;
+	test_ID := t_ID;
+	TOrderValid := t_valid;
+	test_out := t_out;
+	test_status := t_stat;
+	test_result := res;
+	perturb_warehouse := perturb_w;
+	perturb_wagonA := perturb_wagA;
+	perturb_wagonB := perturb_wagB;
+	perturb_wagonC := perturb_wagC;
+	perturb_teststation := perturb_t;
+	perturb_status := perturb_stat;
+);
+
+
+public Step: () ==> ()
+Step() == (
+
+		 dcl newOrderIdx: nat := GlobalTypes`getIdFromComposedMessage(hmi_command.getValue());
+		 dcl newOrderCmd:  nat := GlobalTypes`getCmdFromComposedMessage(hmi_command.getValue());
+		 dcl oldOrderIdx:  nat := GlobalTypes`getIdFromComposedMessage(item_status.getValue());
+		 dcl oldOrderCmd:  nat := GlobalTypes`getCmdFromComposedMessage(item_status.getValue());
+		 
+		 if ( newOrderIdx not in set dom USBitems and newOrderCmd<>1 ) then
+		(
+				item_status.setValue(GlobalTypes`composeAnswer(newOrderCmd,newOrderIdx,GlobalTypes`StatusToInt(<UNDEFINED>)));
+				IO`printf("Invalid command: index %s, command %s\n",[newOrderIdx,newOrderCmd]);
+				newOrderIdx := 0;
+		);
+	  if ( ( newOrderIdx     in set dom USBitems and newOrderCmd =1 ) and
+	     ( newOrderIdx <> oldOrderIdx or newOrderCmd <> oldOrderCmd ) ) then
+		(
+				item_status.setValue(GlobalTypes`composeAnswer(newOrderCmd,newOrderIdx,GlobalTypes`StatusToInt(<UNDEFINED>)));
+				IO`printf("Order already exists: index %s, command %s, oldindex %s, oldcommand %s\n",[newOrderIdx,newOrderCmd,oldOrderIdx,oldOrderCmd]);
+				newOrderIdx := 0;
+		);
+		 
+		  bla0 := GlobalTypes`decodeOpt(hmi_command.getValue());
+  	  bla1 := GlobalTypes`decodeC1(hmi_command.getValue());
+  		bla2 := GlobalTypes`decodeC2(hmi_command.getValue());
+  		bla3 := GlobalTypes`decodeC3(hmi_command.getValue());
+  		--IO`printf("%s\tTracker order #%s:  \t CMDS: HMI sends %s, %s, PT sends %s, %s\n", [GlobalTypes`roundTimeToTheSecond(time),newOrderIdx,newOrderIdx,newOrderCmd,oldOrderIdx,oldOrderCmd]);
+  		--IO`printf("%s\tTracker order #%s:  \t BLAS: %s, %s, %s, %s\n", [GlobalTypes`roundTimeToTheSecond(time),newOrderIdx,bla0,bla1,bla2,bla3]);
+		 
+
+				/* new order section*/
+  			if newOrderIdx > 0 and newOrderCmd = 1 and ( newOrderIdx <> oldOrderIdx or newOrderCmd <> oldOrderCmd ) then
+  			(			  		
+	  	  	USBitems := USBitems ++ {newOrderIdx |-> mk_(0,	bla0,	bla1,	bla2,	bla3)};
+		    	USBlocs := USBlocs ++ {newOrderIdx |-> <ORDERED>};
+		    	USBwagons := USBwagons ++ {newOrderIdx |-> 0 };
+		    	USBoptions := USBoptions ++ {newOrderIdx |-> bla0 };
+		    	USBordervalidity := USBordervalidity ++ {newOrderIdx |-> true};
+				 
+	  		  if GlobalTypes`debugConsoleMsg mod 2 = 1 then
+				  IO`printf("%s\tTracker order #%s:  \t %s %s, %s m/s,\n", [GlobalTypes`roundTimeToTheSecond(time),newOrderIdx,USBlocs(newOrderIdx),
+				  																													mk_(GlobalTypes`Colour_Int2Str(GlobalTypes`decodeC1(hmi_command.getValue())),
+				  																															GlobalTypes`Colour_Int2Str(GlobalTypes`decodeC2(hmi_command.getValue())),
+				  																															GlobalTypes`Colour_Int2Str(GlobalTypes`decodeC3(hmi_command.getValue()))),
+				  																															GlobalTypes`decodeOpt(hmi_command.getValue())]);
+		  		item_status.setValue(GlobalTypes`composeAnswer(newOrderCmd,newOrderIdx,GlobalTypes`StatusToInt(<ORDERED>)));
+		  		
+		  		);
+		  		
+		  	/* change order section*/
+  			if newOrderIdx > 0 and newOrderCmd = 2 and ( newOrderIdx <> oldOrderIdx or newOrderCmd <> oldOrderCmd ) then
+  			(			  		
+	  	  	USBitems(newOrderIdx) := mk_(0,	bla0,	bla1,	bla2,	bla3);
+				 
+	  		  if GlobalTypes`debugConsoleMsg mod 2 = 1 then
+				  IO`printf("%s\tTracker order changed #%s:  \t %s %s, %s m/s,\n", [GlobalTypes`roundTimeToTheSecond(time),newOrderIdx,USBlocs(newOrderIdx),
+				  																													mk_(GlobalTypes`Colour_Int2Str(GlobalTypes`decodeC1(hmi_command.getValue())),
+				  																															GlobalTypes`Colour_Int2Str(GlobalTypes`decodeC2(hmi_command.getValue())),
+				  																															GlobalTypes`Colour_Int2Str(GlobalTypes`decodeC3(hmi_command.getValue()))),
+				  																															GlobalTypes`decodeOpt(hmi_command.getValue())]);
+		  		item_status.setValue(GlobalTypes`composeAnswer(newOrderCmd,newOrderIdx,GlobalTypes`StatusToInt(USBlocs(newOrderIdx)) ));
+		  		
+		  		--IO`printf("%s\t kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk %s\n", [GlobalTypes`roundTimeToTheSecond(time),USBitems(newOrderIdx)] )
+				  							
+		  		);
+		
+
+
+		/*cancellation section*/
+		if newOrderIdx > 0 and newOrderCmd = 0 and (newOrderIdx <> oldOrderIdx or newOrderCmd <> oldOrderCmd) then
+  			if USBlocs(newOrderIdx) <> <CANCELLED> and USBlocs(newOrderIdx) <> <END_USER> and 
+  			   USBordervalidity(newOrderIdx) = true then
+  			(
+  			  USBordervalidity(newOrderIdx) := false;
+  			  item_status.setValue(GlobalTypes`composeAnswer(newOrderCmd,newOrderIdx,GlobalTypes`StatusToInt(<CANCELLED>)));
+	  		 
+	  		  if GlobalTypes`debugConsoleMsg mod 2 = 1 then
+		  		IO`printf("%s\tTracker order #%s:  \t Cancelling order...\n", [GlobalTypes`roundTimeToTheSecond(time),newOrderIdx])
+		  	)
+		  	else
+		  	(
+		  		item_status.setValue(GlobalTypes`composeAnswer(newOrderCmd,newOrderIdx,GlobalTypes`StatusToInt(USBlocs(newOrderIdx))));
+		  	);
+		  
+		/*query response section*/
+		if newOrderIdx > 0 and newOrderCmd = 3 and (newOrderIdx <> oldOrderIdx or newOrderCmd <> oldOrderCmd) then
+  			(
+  			  item_status.setValue(GlobalTypes`composeAnswer(newOrderCmd,newOrderIdx,GlobalTypes`StatusToInt(USBlocs(newOrderIdx))));
+	  		 
+	  		  if GlobalTypes`debugConsoleMsg mod 2 = 1 then
+		  		IO`printf("%s\tTracker order #%s:  \t Responding to query... %s\n", [GlobalTypes`roundTimeToTheSecond(time),newOrderIdx,USBlocs(newOrderIdx)])
+		  	);
+		  	
+		  	  
+		for all idx in set dom USBitems do
+		(
+		  	/*if still in state ordered => direct cancellation*/
+		  	if (USBlocs(idx) = <ORDERED> or USBlocs(idx) = <WAITING_ROOM>) and USBordervalidity(idx) = false then
+		  	(
+		  		USBlocs(idx) := <CANCELLED>;
+		  		
+		  		if GlobalTypes`debugConsoleMsg mod 2 = 1 then
+			  	IO`printf("%s\tTracker order #%s:  \t %s\n", [GlobalTypes`roundTimeToTheSecond(time),idx,USBlocs(idx)])
+		  	);
+		 );
+	
+
+		/*Perturbation section*/
+		perturb_status.setValue(GlobalTypes`composePerturbStatus(perturb_warehouse.getValue(),perturb_wagonA.getValue(),perturb_wagonB.getValue(),perturb_wagonC.getValue(),perturb_teststation.getValue()));
+		
+		if (GlobalTypes`debugConsoleMsg mod 2 = 1) and (perturb_status.getValue() > 0) then
+	  IO`printf("%s\tTracker perturbations:  \t %s\n", [GlobalTypes`roundTimeToTheSecond(time),perturb_status.getValue()]);
+				
+		/*Warehouse section*/
+		for all idx in set dom USBitems do 
+  	(
+  			if USBlocs(idx) = <WAREHOUSE> then
+				(
+					/*Confirm order is still valid*/
+					WOrderValid.setValue(USBordervalidity(idx));
+				);
+				
+  		  /*move order to warehouse*/
+  			if USBlocs(idx) = <ORDERED> and ( USBlocs(tracker_ID.getValue()) <> <WAREHOUSE> ) then
+  			(
+  				if USBordervalidity(idx) = true then
+  				(
+	  			  let
+	  			  	the_tuple = USBitems(idx),
+--	  			  	msgOTime = the_tuple.#1,
+--	  			  	msgIntPart0 = the_tuple.#2,
+	  			  	msgIntPart1 = the_tuple.#3,
+	  			  	msgIntPart2 = the_tuple.#4,
+	  			  	msgIntPart3 = the_tuple.#5
+						
+						in(
+					  	tracker_ID.setValue(idx);
+			  		  WOrderValid.setValue(true);
+			  			warehouse_in1.setValue(msgIntPart1);
+			  			warehouse_in2.setValue(msgIntPart2);
+			  			warehouse_in3.setValue(msgIntPart3);
+			  			warehouse_out.setValue(0);
+			  			USBlocs(idx) := <WAREHOUSE>;
+			  			item_in_WAREHOUSE.setValue(idx);
+			  		)
+			  	);
+			  	
+			  	if USBordervalidity(idx) = false then
+			  	(
+			  		USBlocs(idx) := <CANCELLED>;
+			  	);
+			  	
+			  	if GlobalTypes`debugConsoleMsg mod 2 = 1 then
+			  	IO`printf("%s\tTracker order #%s:  \t %s\n", [GlobalTypes`roundTimeToTheSecond(time),idx,USBlocs(idx)])
+		  	);
+				
+		 );
+		  		
+		  
+		/*Waiting Room section*/		
+		let id = warehouse_out.getValue() in if id in set dom USBlocs and USBlocs(id) = <WAREHOUSE> then 
+		(
+			USBlocs(id) := if USBordervalidity(id)
+				 								then <WAITING_ROOM>
+				 								else <CANCELLED>;
+				 								
+			if USBlocs(id) = <WAITING_ROOM> then        
+			  item_in_WAITING_ROOM.setValue(id);
+			
+			if GlobalTypes`debugConsoleMsg mod 2 = 1 then
+			IO`printf("%s\tTracker order #%s:\t %s\n", [GlobalTypes`roundTimeToTheSecond(time),id,USBlocs(id)]);		
+		); 
+				
+		
+		/*Wagon section*/
+			Wagons_pos := [wagonA_pos.getValue(),wagonB_pos.getValue(),wagonC_pos.getValue()];
+			Wagons_speeds := [wagonA_speed.getValue(),wagonB_speed.getValue(),wagonC_speed.getValue()];
+			wagonPositions.setValue(GlobalTypes`composePositions(Wagons_pos(1),Wagons_pos(2),Wagons_pos(3)));
+			if 0 = GlobalTypes`roundTimeToTheSecond(time) mod 10 then
+			(
+				if GlobalTypes`debugConsoleMsg mod 2 = 1 then
+				IO`printf("%s\tWagon pos.,sp.&loads:\t %s %s %s %s\n", [GlobalTypes`roundTimeToTheSecond(time), wagonPositions.getValue(),Wagons_pos, Wagons_speeds, WagonsLoads]);
+			);
+
+				for widx = 1 to 3 do 
+	  		(
+					if Wagons_pos(widx) = GlobalTypes`LOADING_STATION and WagonsLoads(widx) = 0 then 
+					(
+						for all idx in set dom USBitems do 
+				  	(
+				  		if WagonsLoads(widx) = 0 and USBlocs(idx) = <WAITING_ROOM> then
+				  			(
+									USBlocs(idx) := <WAGON>;
+									item_in_WAGON.setValue(idx);
+									USBwagons(idx) := widx;
+									WagonsLoads(widx) := idx;
+									
+									if GlobalTypes`debugConsoleMsg mod 2 = 1 then
+									IO`printf("%s\tTracker order #%s:\t %s %s \n", [GlobalTypes`roundTimeToTheSecond(time),idx,USBlocs(idx),widx]);
+								)
+						);
+						
+						if widx = 1 then
+						(
+						   wagonA_leaveStationCommand.setValue(true);
+						   wagonA_speed.setValue( USBoptions(WagonsLoads(widx)) );
+						);
+						if widx = 2 then
+						(
+						   wagonB_leaveStationCommand.setValue(true);
+						   wagonB_speed.setValue( USBoptions(WagonsLoads(widx)) );
+						);
+						if widx = 3 then
+						(
+						   wagonC_leaveStationCommand.setValue(true);
+						   wagonC_speed.setValue( USBoptions(WagonsLoads(widx)) );
+						);
+						
+					);
+					
+					if Wagons_pos(widx) = GlobalTypes`TESTING_STATION then 
+					(
+						if WagonsLoads(widx) <> 0 and test_status.getValue() = GlobalTypes`FREE then
+						(
+							USBlocs(WagonsLoads(widx)) := <TEST_STATION>;
+							item_in_TEST_STATION.setValue(WagonsLoads(widx));         
+							/*Set complex signal to test station
+							composedCommand := GlobalTypes`composeCommand(1,idx,USBoptions(idx),USBcolour1(idx),USBcolour2(idx),USBcolour3(idx));
+  						*/
+  						composedCommand := GlobalTypes`composeCommand(1,WagonsLoads(widx),0,USBitems(WagonsLoads(widx)).#3,USBitems(WagonsLoads(widx)).#4,USBitems(WagonsLoads(widx)).#5);
+							test_ID.setValue(composedCommand);
+							TOrderValid.setValue(USBordervalidity(WagonsLoads(widx)));
+							
+							
+							if GlobalTypes`debugConsoleMsg mod 2 = 1 then
+							IO`printf("%s\tTracker order #%s:\t %s %s\n", [GlobalTypes`roundTimeToTheSecond(time),WagonsLoads(widx),USBlocs(WagonsLoads(widx)),composedCommand]);
+							
+							WagonsLoads(widx) := 0;
+						);
+						
+						if WagonsLoads(widx) = 0 then
+						(		
+							--IO`printf("widx = %s\n",[widx]);					
+							if widx = 1 then
+							(
+							   wagonA_leaveStationCommand.setValue(true);
+							   wagonA_speed.setValue( GlobalTypes`DEFAULT_SPEED );
+							);
+							if widx = 2 then
+							(
+							   wagonB_leaveStationCommand.setValue(true);
+							   wagonB_speed.setValue( GlobalTypes`DEFAULT_SPEED );
+							);
+							if widx = 3 then
+							(
+							   wagonC_leaveStationCommand.setValue(true);
+							   wagonC_speed.setValue( GlobalTypes`DEFAULT_SPEED );
+							);
+							
+						);		
+					);
+					
+					
+					if Wagons_pos(widx) <> GlobalTypes`LOADING_STATION and Wagons_pos(widx) <> GlobalTypes`TESTING_STATION then
+					(
+						if widx = 1 then
+						(
+						   wagonA_leaveStationCommand.setValue(false);
+						);
+						if widx = 2 then
+						(
+						   wagonB_leaveStationCommand.setValue(false);
+						);
+						if widx = 3 then
+						(
+						   wagonC_leaveStationCommand.setValue(false);
+						);
+					 )
+				);
+			
+		/*Testing section*/		
+		if test_status.getValue() = GlobalTypes`BUSY then
+		(
+				test_ID.setValue(0);
+		);
+		
+		for all idx in set dom USBitems do 
+  	(
+  			if USBlocs(idx) = <TEST_STATION> then
+				(
+					/*Confirm order is still valid*/
+					TOrderValid.setValue(USBordervalidity(idx));
+				);
+		);
+		
+		
+		let id = test_out.getValue() in if id in set dom USBlocs and USBlocs(id) = <TEST_STATION> then 
+		(
+		
+			if USBordervalidity(id) = true then
+				USBlocs(id) := if test_result.getValue() 
+				               then <END_USER>
+			                 else <ORDERED>;
+			        
+			if USBlocs(id) = <END_USER> then        
+				item_in_END_USER.setValue(id);
+			                
+			if USBordervalidity(id) = false then
+				USBlocs(id) := <CANCELLED>;
+			                 
+			if GlobalTypes`debugConsoleMsg mod 2 = 1 then
+			IO`printf("%s\tTracker order afterTestStation #%s:\t %s\n", [GlobalTypes`roundTimeToTheSecond(time),id,USBlocs(id)]);		
+
+			test_out.setValue(0);		
+		);
+)
+
+
+thread 
+periodic(2e9,0,0,0)(Step) 
+  
+end Unit_PartTracker

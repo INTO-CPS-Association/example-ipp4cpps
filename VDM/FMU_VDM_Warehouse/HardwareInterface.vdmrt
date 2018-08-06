@@ -1,0 +1,35 @@
+--##	EXPORT	b107d792ba08f952ca45153733757e7b18ae27f1	FMU_VDM_Warehouse.fmu	2017-07-03 12:12:23	tool-wrapper	{"name":"fmu-import-export","version":"0.1.7-SNAPSHOT"}
+--##	EXPORT	1a0e072257a0ab28d4326b570d28b73779417e05	FMU_VDM_Warehouse.fmu	2017-06-03 14:23:42	tool-wrapper	{"name":"fmu-import-export","version":"0.1.6"}
+class HardwareInterface
+
+instance variables
+
+-- @ interface: type = input, name="p_ID";
+public p_ID: IntPort := new IntPort(0);
+
+-- @ interface: type = input, name="w_valid";
+public w_valid: BoolPort := new BoolPort(false);
+-- @ interface: type = input, name="w_in1";
+public w_in1: IntPort := new IntPort(0);
+-- @ interface: type = input, name="w_in2";
+public w_in2: IntPort := new IntPort(0);
+-- @ interface: type = input, name="w_in3";
+public w_in3: IntPort := new IntPort(0);
+-- @ interface: type = output, name="w_out";
+public w_out: IntPort := new IntPort(0);
+
+-- @ interface: type = output, name="r_ID";
+public r_ID: 	IntPort := new IntPort(0);
+-- @ interface: type = output, name="r_in1";
+public r_in1: IntPort := new IntPort(0);
+-- @ interface: type = output, name="r_in2";
+public r_in2: IntPort := new IntPort(0);
+-- @ interface: type = input, name="r_out";
+public r_out: IntPort := new IntPort(0);
+
+
+-- @ interface: type = output, name="perturb_w";
+public perturb_w: IntPort := new IntPort(0);
+
+
+end HardwareInterface

@@ -1,0 +1,21 @@
+class World
+
+instance variables
+
+public static done: bool := false
+
+operations
+
+public run: () ==> ()
+run() == ( 
+	start(P_SYSTEM`parttracker);	
+  block();
+);
+
+private block : () ==>()
+block() == skip;
+
+sync
+per block => done;
+  
+end World

@@ -1,0 +1,178 @@
+class Unit_HMI
+
+types
+
+USBItem = GlobalTypes`OrderTime *
+					GlobalTypes`OptionInt * 
+          GlobalTypes`ColourInt * 
+          GlobalTypes`ColourInt * 
+          GlobalTypes`ColourInt;
+
+
+Order_Locations  = <UNDEFINED> | <DEFINED>;
+Item_Locations  = <UNDEFINED> | <ORDERED> | <WAREHOUSE> | <WAITING_ROOM> | <WAGON> | <TEST_STATION> | <END_USER> | <CANCELLED>;
+
+
+instance variables
+
+composedCommand: nat := 0;
+OrdersHaveBeenRead: bool := false;
+newcomposedmessage: int := -1;
+
+USBitems: map GlobalTypes`OrderID to USBItem := {|->};
+inv dom USBitems = {1,...,card dom USBitems};
+OrderLocs : map GlobalTypes`OrderID to Order_Locations   := { 0 |-> <UNDEFINED>};
+USBlocs  : map GlobalTypes`OrderID to Item_Locations := { 0 |-> <UNDEFINED>};
+
+USBordertimes : map GlobalTypes`OrderID to GlobalTypes`OrderTime := { 0 |-> 0};
+USBcanceltimes : map GlobalTypes`OrderID to GlobalTypes`CancelTime := { 0 |-> 0};
+
+USBoptions : map GlobalTypes`OrderID to GlobalTypes`OptionInt := { 0 |-> GlobalTypes`DEFAULT_SPEED};
+USBcolour1 : map GlobalTypes`OrderID to GlobalTypes`ColourInt := { 0 |-> 0};
+USBcolour2 : map GlobalTypes`OrderID to GlobalTypes`ColourInt := { 0 |-> 0};
+USBcolour3 : map GlobalTypes`OrderID to GlobalTypes`ColourInt := { 0 |-> 0};
+
+
+hmi_command:	IntPort; /*HMI command/change/query*/
+item_status:	IntPort; /*Part Tracker response to HMI (item status)*/
+wagonPositions: IntPort;
+
+item_in_WAREHOUSE 		:	IntPort;
+item_in_WAITING_ROOM 	:	IntPort;
+item_in_WAGON 				:	IntPort;
+item_in_TEST_STATION 	:	IntPort;
+item_in_END_USER 			:	IntPort;
+
+perturb_status        : IntPort;
+
+operations
+
+public Unit_HMI: 	IntPort * IntPort * IntPort /*HMI command, Part Tracker status reply to HMI, wagonPositions for HMI*/
+								* IntPort * IntPort * IntPort * IntPort * IntPort /*item in WAREHOUSE / WAITING_ROOM / WAGON / TEST_STATION / END_USER */
+								* IntPort				
+									==> Unit_HMI								
+Unit_HMI(h_command,p_status,wagonPoss,ack_WAREHOUSE,ack_WAITING_ROOM, ack_WAGON, ack_TEST_STATION, ack_END_USER, perturb_stat) == (
+	hmi_command := h_command;
+	item_status := p_status;
+	wagonPositions := wagonPoss;
+	item_in_WAREHOUSE := ack_WAREHOUSE;
+	item_in_WAITING_ROOM := ack_WAITING_ROOM;
+	item_in_WAGON := ack_WAGON;
+	item_in_TEST_STATION := ack_TEST_STATION;
+	item_in_END_USER := ack_END_USER;
+	perturb_status := perturb_stat;
+);
+
+
+public Step: () ==> ()
+Step() == (
+
+	   dcl idxSent: nat := GlobalTypes`getIdFromComposedMessage(hmi_command.getValue());
+		 dcl idxRec:  nat := GlobalTypes`getIdFromComposedMessage(item_status.getValue());
+		 dcl cmdSent: nat := GlobalTypes`getCmdFromComposedMessage(hmi_command.getValue());
+		 dcl cmdRec:  nat := GlobalTypes`getCmdFromComposedMessage(item_status.getValue());
+		 dcl statusRec: nat:=  GlobalTypes`getStatusFromComposedMessage(item_status.getValue());
+		 
+		 --IO`printf("%s\tHMI sends %s, %s, PT sends %s, %s, %s\n", [GlobalTypes`roundTimeToTheSecond(time),idxSent,cmdSent,idxRec,cmdRec, statusRec]);
+  		
+		 
+		/*Reading csv section*/
+		if OrdersHaveBeenRead = false then
+			(
+				/*read csv file*/
+				dcl lines: real := 0;
+				
+				-- read the number of lines in the file
+				-- if there was a problem, success will be false
+				let the_tuple = CSV`flinecount("orders.csv"),
+						success = the_tuple.#1,
+						ls = the_tuple.#2
+					in
+					if success then lines := ls;
+		
+				for all currid in set {1,...,lines} do
+					let the_tuple = CSV`freadval[seq of nat]("orders.csv", currid),
+							success = the_tuple.#1,
+							vals = the_tuple.#2 in 
+					if success then (
+			  		atomic 
+			  		(
+			  			OrderLocs := OrderLocs ++ {currid |-> <UNDEFINED>};
+			  	  	USBitems := USBitems ++ {currid |-> mk_(vals(1),vals(2),vals(3),vals(4),vals(5))};
+				    	USBlocs := USBlocs ++ {currid |-> <UNDEFINED>};
+				    	USBordertimes := USBordertimes ++ {currid |-> vals(1)};
+				    	USBoptions := USBoptions ++ {currid |-> vals(2) };
+				    	USBcolour1 := USBcolour1 ++ {currid |-> vals(3) };
+				    	USBcolour2 := USBcolour2 ++ {currid |-> vals(4) };
+				    	USBcolour3 := USBcolour3 ++ {currid |-> vals(5) };
+				    	USBcanceltimes := USBcanceltimes ++ {currid |-> vals(6)};
+				    	
+				    ); 		
+		  		
+				  );
+				  
+				OrdersHaveBeenRead := true;	
+			);
+
+		 
+		/*order section*/
+		newcomposedmessage := -1;
+		for all idx in set dom USBitems do 
+  	(
+  			if idx > 0 and OrderLocs(idx) = <UNDEFINED> and 
+  			GlobalTypes`roundTimeToTheSecond(time) >= USBordertimes(idx) and
+  			(GlobalTypes`roundTimeToTheSecond(time) < USBcanceltimes(idx) or  USBcanceltimes(idx) < USBordertimes(idx)) and
+  			idxSent = idxRec and cmdSent = cmdRec then
+  			(
+  			/*compose message "neworder"*/
+  			composedCommand := GlobalTypes`composeCommand(1,idx,USBoptions(idx),USBcolour1(idx),USBcolour2(idx),USBcolour3(idx));
+  			hmi_command.setValue(composedCommand);
+  			newcomposedmessage := 1;
+ 	  	  );
+ 	  	  
+ 	  	  if idx > 0 and OrderLocs(idx) = <DEFINED> and USBcanceltimes(idx) > USBordertimes(idx) and
+ 	  	  GlobalTypes`roundTimeToTheSecond(time) >= USBcanceltimes(idx) 
+  			and idxSent = idxRec and cmdSent = cmdRec then
+  			(
+  			/*compose message "cancel"*/
+  			composedCommand := GlobalTypes`composeCommand(0,idx,USBoptions(idx),USBcolour1(idx),USBcolour2(idx),USBcolour3(idx));
+  			hmi_command.setValue(composedCommand);
+ 	  	  newcomposedmessage := 1;
+ 	  	  )
+		 );
+		 
+		 /*if no new order or cancellation, send a query */
+		 if newcomposedmessage = -2 and idxSent = idxRec and cmdSent = cmdRec then
+		 (
+		 			for all idx in set dom USBitems do 
+  				(
+  						if idx > 0 and OrderLocs(idx) = <DEFINED> then
+  						(
+  								/*compose message "cancel"*/
+  								composedCommand := GlobalTypes`composeCommand(3,idx,USBoptions(idx),USBcolour1(idx),USBcolour2(idx),USBcolour3(idx));
+  								hmi_command.setValue(composedCommand);
+  						)
+  				)		
+		 );
+
+		/*update status section*/
+		if idxRec > 0 and cmdRec <> 0 then
+		(
+			/*compose message*/
+			OrderLocs(idxRec) := <DEFINED>;
+			USBlocs(idxRec) := GlobalTypes`IntToStatus(statusRec);
+		);
+		if idxRec > 0 and cmdRec = 0 then
+		(
+			/*compose message*/
+			OrderLocs(idxRec) := <UNDEFINED>;
+			USBlocs(idxRec) := GlobalTypes`IntToStatus(statusRec);
+		)
+
+)
+
+
+thread 
+periodic(1e9,0,0,0)(Step) 
+  
+end Unit_HMI

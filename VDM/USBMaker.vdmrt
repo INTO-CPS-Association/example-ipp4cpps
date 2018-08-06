@@ -1,0 +1,88 @@
+system USBMaker
+
+instance variables
+
+/*h = HMI */
+static h_command: IntPort := new IntPort(0);
+static commandAck: IntPort := new IntPort(0);
+static wagonPoss:	IntPort := new IntPort(0);
+
+static ack_WAREHOUSE 			:	IntPort := new IntPort(0);
+static ack_WAITING_ROOM 	:	IntPort := new IntPort(0);
+static ack_WAGON 					:	IntPort := new IntPort(0);
+static ack_TEST_STATION 	:	IntPort := new IntPort(0);
+static ack_END_USER 			:	IntPort := new IntPort(0);
+
+/*p = part tracker*/
+static p_ID: IntPort := new IntPort(0);
+/*w = warehouse*/
+static w_valid: BoolPort := new BoolPort(false);
+static w_in1: IntPort := new IntPort(0);
+static w_in2: IntPort := new IntPort(0);
+static w_in3: IntPort := new IntPort(0);
+static w_out: IntPort := new IntPort(0);
+/*r = robot*/
+static r_ID: 	IntPort := new IntPort(0);
+static r_in1: IntPort := new IntPort(0);
+static r_in2: IntPort := new IntPort(0);
+static r_out: IntPort := new IntPort(0);
+/*c = conveyor/wagons*/
+static posA: IntPort := new IntPort(0);
+static posB: IntPort := new IntPort(0);
+static posC: IntPort := new IntPort(0);
+static speedA: IntPort := new IntPort(GlobalTypes`DEFAULT_SPEED);
+static speedB: IntPort := new IntPort(GlobalTypes`DEFAULT_SPEED);
+static speedC: IntPort := new IntPort(GlobalTypes`DEFAULT_SPEED);
+static leaveStationA: BoolPort := new BoolPort(false);
+static leaveStationB: BoolPort := new BoolPort(false);
+static leaveStationC: BoolPort := new BoolPort(false);
+/*t = test station */
+static t_ID: IntPort := new IntPort(0);
+static t_valid: BoolPort := new BoolPort(false);
+static t_out: IntPort := new IntPort(0);
+static t_status: IntPort := new IntPort(0);
+static testResult: BoolPort := new BoolPort(true);
+/*perturbations*/
+static perturb_w : IntPort:= new IntPort(0);
+static perturb_wagA : IntPort:= new IntPort(0);
+static perturb_wagB : IntPort:= new IntPort(0);
+static perturb_wagC : IntPort:= new IntPort(0);
+static perturb_t : IntPort:= new IntPort(0);
+static perturb_stat : IntPort:= new IntPort(0);
+
+public static hmi:					Unit_HMI					:= new Unit_HMI(h_command,commandAck,wagonPoss,ack_WAREHOUSE,ack_WAITING_ROOM, ack_WAGON, ack_TEST_STATION, ack_END_USER,perturb_stat);
+public static tracker:   		Unit_PartTracker  := new Unit_PartTracker(h_command,commandAck,wagonPoss,ack_WAREHOUSE,ack_WAITING_ROOM, ack_WAGON, ack_TEST_STATION, ack_END_USER,p_ID, w_valid,w_in1,w_in2,w_in3,w_out,posA,posB,posC,speedA,speedB,speedC,leaveStationA,leaveStationB,leaveStationC,t_ID,t_valid,t_out,t_status,testResult,perturb_w,perturb_wagA,perturb_wagB,perturb_wagC,perturb_t,perturb_stat);
+public static warehouse: 		Unit_Warehouse    := new Unit_Warehouse(p_ID, w_valid,w_in1,w_in2,w_in3,w_out, r_ID,r_in1,r_in2,r_out,perturb_w);
+public static robot:     		Unit_Robot        := new Unit_Robot(r_ID,r_in1,r_in2,r_out);
+public static wagonA:		 		Unit_Wagon				:= new Unit_Wagon(new IntPort(2),posA,speedA,leaveStationA,posC,posB,perturb_wagA);
+public static wagonB:		 		Unit_Wagon				:= new Unit_Wagon(new IntPort(1),posB,speedB,leaveStationB,posA,posC,perturb_wagB);
+public static wagonC:		 		Unit_Wagon				:= new Unit_Wagon(new IntPort(0),posC,speedC,leaveStationC,posB,posA,perturb_wagC);
+public static testStation:	Unit_TestStation	:= new Unit_TestStation(t_ID,t_valid,t_out,t_status,testResult,perturb_t);
+
+
+public static timer: Timer := new Timer();
+
+cpu0: CPU := new CPU (<FCFS>,1E6);
+cpu1: CPU := new CPU (<FCFS>,1E6);
+cpu2: CPU := new CPU (<FCFS>,1E6);
+cpu3: CPU := new CPU (<FCFS>,1E6);
+cpu4: CPU := new CPU (<FCFS>,1E6);
+cpu5: CPU := new CPU (<FCFS>,1E6);
+cpu6: CPU := new CPU (<FCFS>,1E6);
+cpu7: CPU := new CPU (<FCFS>,1E6);
+
+operations
+
+USBMaker: () ==> USBMaker
+USBMaker() == (
+	cpu0.deploy(hmi);
+	cpu1.deploy(tracker);
+	cpu2.deploy(warehouse);
+	cpu3.deploy(robot);
+	cpu4.deploy(wagonA);
+	cpu5.deploy(wagonB);
+	cpu6.deploy(wagonC);
+	cpu7.deploy(testStation);
+)
+
+end USBMaker

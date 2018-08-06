@@ -1,0 +1,18 @@
+system R_SYSTEM
+
+instance variables
+
+
+public static hwi: HardwareInterface := new HardwareInterface();
+
+public static robot:  Unit_Robot        := new Unit_Robot(hwi.r_ID,hwi.r_in1,hwi.r_in2,hwi.r_out);
+
+cpu: CPU := new CPU (<FCFS>,1E6);
+
+operations
+R_SYSTEM: () ==> R_SYSTEM
+R_SYSTEM() == (
+	cpu.deploy(robot);
+)
+
+end R_SYSTEM

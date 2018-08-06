@@ -1,0 +1,79 @@
+class Unit_TestStation
+
+instance variables
+
+test_ID: IntPort;
+TOrderValid: BoolPort;
+test_out: IntPort; /* return order ID */
+test_status: IntPort; /* FREE / BUSY */
+test_result: BoolPort;
+perturb_testStation: IntPort;
+
+TSTimer: nat := 0;
+ID_in_work: nat := 0;
+
+operations
+
+public Unit_TestStation: IntPort * BoolPort * IntPort * IntPort * BoolPort * IntPort ==> Unit_TestStation
+Unit_TestStation(t_ID,t_valid,t_out, t_status,res,perturb_t) == (
+	
+	test_ID  := t_ID;	
+	TOrderValid := t_valid;
+	test_out := t_out;
+	test_status := t_status;
+	test_result := res;
+	perturb_testStation:= perturb_t;
+);
+
+public Step: () ==> ()
+Step() == (
+		dcl currid: nat := GlobalTypes`getIdFromComposedMessage(test_ID.getValue());
+		
+				if currid > 0 and test_status.getValue() = GlobalTypes`FREE then 
+				(
+					test_status.setValue(GlobalTypes`BUSY);
+		  		TSTimer := TESTING_TIME;
+		  		ID_in_work := currid;
+		  		
+		  		if floor(GlobalTypes`debugConsoleMsg / 16) mod 2 = 1 then
+	  			IO`printf("%s\tTest Station action:\t busy %s\n", [GlobalTypes`roundTimeToTheSecond(time),currid]);
+		  	);
+		  	
+		  	if test_status.getValue() = GlobalTypes`BUSY then
+		  	(
+			  	if TSTimer <= 0 or TOrderValid.getValue() = false then 
+	  			(
+	  				if floor(GlobalTypes`debugConsoleMsg / 16) mod 2 = 1 then
+	  				IO`printf("%s\tTest Station action:\t tested item %s\n", [GlobalTypes`roundTimeToTheSecond(time), ID_in_work]);
+	  				
+	  				test_out.setValue(ID_in_work);
+	  				test_status.setValue(GlobalTypes`FREE);
+	  						
+	  				if MATH`rand(PROBABILITY_OF_CORRECT_PIECE) > 0
+	  							then test_result.setValue(true)
+	  							else test_result.setValue(false);
+	  							
+	  				perturb_testStation.setValue(GlobalTypes`PERTURB_NONE);
+	  			) 
+	  			else 
+	  			(
+	  				TSTimer := TSTimer - 1;
+	  				if TSTimer < 7 then
+	  				(
+	  					perturb_testStation.setValue(GlobalTypes`PERTURB_LOW);
+	  					--if floor(GlobalTypes`debugConsoleMsg / 16) mod 2 = 1 then
+	  					--IO`printf("%s\tTest Station perturbation level %s\n", [GlobalTypes`roundTimeToTheSecond(time), perturb_testStation.getValue()]);
+	  				)
+	  			)
+	  		)
+)
+
+thread 
+periodic(1e9,0,0,0)(Step)
+
+values
+
+TESTING_TIME = 15;
+PROBABILITY_OF_CORRECT_PIECE = 1000; /* 100 => ONE in 100*/
+
+end Unit_TestStation

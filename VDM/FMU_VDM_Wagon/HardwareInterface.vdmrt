@@ -1,0 +1,26 @@
+class HardwareInterface
+
+values
+
+-- @ interface: type = parameter, name="START_POS";
+public START_POS: IntPort = new IntPort(0);
+
+instance variables
+
+-- @ interface: type = output, name="pos";
+public pos:		IntPort := new IntPort(0);
+-- @ interface: type = input, name="speed";
+public speed: 	IntPort := new IntPort(0);
+
+-- @ interface: type = input, name="leaveStation";
+public leaveStation: BoolPort := new BoolPort(false);
+
+-- @ interface: type = input, name="pos_front";
+public pos_front: IntPort := new IntPort(0);
+-- @ interface: type = input, name="pos_behind";
+public pos_behind: IntPort := new IntPort(0);
+
+-- @ interface: type = output, name="perturb_wag";
+public perturb_wag:		IntPort := new IntPort(0);
+
+end HardwareInterface

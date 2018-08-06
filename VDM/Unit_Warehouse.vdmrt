@@ -1,0 +1,180 @@
+class Unit_Warehouse
+
+instance variables
+
+tracker_ID:	IntPort;
+WOrderValid: BoolPort;
+warehouse_in1: 	IntPort;
+warehouse_in2: 	IntPort;
+warehouse_in3: 	IntPort;
+--order valid port
+warehouse_out:	IntPort;
+
+trynumber:	IntPort; /*ID for this request, different from order ID*/
+robot_in1: 	IntPort; /*location 1*/
+robot_in2: 	IntPort; /*location 2*/
+robot_out:	IntPort; /* FREE / BUSY */
+
+perturb_warehouse:	IntPort; 
+
+bottomOfStack1: nat := 1; /* bottom of stack of <Left>   pieces */
+bottomOfStack2: nat := 2; /* bottom of stack of <Middle> pieces */
+bottomOfStack3: nat := 3; /* bottom of stack of <Right>  pieces */
+assemblyBox:    nat := 4; /* assembly box (to pick up the assembled item) */
+wMemoryBox1: nat := 11; /* memory box <Left>   side */
+wMemoryBox2: nat := 12; /* memory box <Middle> side */
+wMemoryBox3: nat := 13; /* memory box <Right>  side */
+waitingLine: nat :=  0; /* location where assembled items wait for the transport wagon */
+
+STAGE0: nat := 0; /* no pieces moved */ 
+STAGE1: nat := 1; /* correct piece <Left>   in assembly box */ 
+STAGE2: nat := 2; /* correct piece <Middle> in assembly box */ 
+STAGE3: nat := 3; /* correct piece <Right>  in assembly box */ 
+STAGE4: nat := 4; /* assembled item moved to waiting line */ 
+
+currColour: nat := 0;
+currTryNumber: nat := 1;
+
+parts: map GlobalTypes`OrderID to [nat] := {|->};
+
+
+operations
+
+public Unit_Warehouse: IntPort * BoolPort * IntPort * IntPort * IntPort * IntPort * IntPort * IntPort * IntPort * IntPort * IntPort ==> Unit_Warehouse
+Unit_Warehouse(p_ID, w_valid,w_in1,w_in2,w_in3,w_out, r_ID,r_in1,r_in2,r_out,perturb_w) == (
+	
+	tracker_ID  := p_ID;
+	WOrderValid := w_valid;
+	warehouse_in1  := w_in1;
+	warehouse_in2  := w_in2;
+	warehouse_in3  := w_in3;
+	warehouse_out  := w_out; 
+	
+	trynumber := 	r_ID;
+	robot_in1 := 	r_in1;
+	robot_in2 := 	r_in2;
+	robot_out :=	r_out;
+	
+	perturb_warehouse := perturb_w;
+	
+);
+
+                          
+public Step: () ==> ()
+Step() == (
+		dcl currid: nat := tracker_ID.getValue();
+		dcl r_id: nat := robot_out.getValue();
+		
+		dcl w_in1_val: nat := warehouse_in1.getValue();
+		dcl w_in2_val: nat := warehouse_in2.getValue();
+		dcl w_in3_val: nat := warehouse_in3.getValue();
+		
+		currTryNumber := currTryNumber + 1;
+		
+		if currid > 0 and ( not currid in set dom parts or parts(currid) = nil ) and currid <> warehouse_out.getValue() then 
+		(
+	  	parts(currid) := STAGE0;
+	  );
+	  
+	  /*Processing cancellation*/
+	  if currid > 0 and WOrderValid.getValue() = false then
+	  (
+	  		parts(currid) := STAGE4;
+	  );
+	  
+	  
+  	for all w_id in set dom parts do 
+  	(
+  		if parts(w_id) <> nil and r_id = GlobalTypes`FREE then
+  		(
+	  			if parts(w_id) = STAGE4 then 
+		  		(
+		  			if floor(GlobalTypes`debugConsoleMsg / 2) mod 2 = 1 then
+		  			IO`printf("%s\tWarehouse order #%s:\t STAGE4 (FINISH)\n", [GlobalTypes`roundTimeToTheSecond(time),w_id]);
+		  			
+		  			trynumber.setValue(0);
+		  			parts(w_id) := nil;
+		  			warehouse_out.setValue(w_id);
+		  			perturb_warehouse.setValue(GlobalTypes`PERTURB_NONE);
+		  		);
+		  		if parts(w_id) = STAGE3 then 
+		  		(
+		  			if floor(GlobalTypes`debugConsoleMsg / 2) mod 2 = 1 then
+		  			IO`printf("%s\tWarehouse order #%s:\t STAGE3\n", [GlobalTypes`roundTimeToTheSecond(time),w_id]);	
+		  			
+		  			perturb_warehouse.setValue(GlobalTypes`PERTURB_LOW);	
+		  			
+		  			trynumber.setValue(currTryNumber);
+		  			robot_in1.setValue(assemblyBox);
+		  			robot_in2.setValue(waitingLine);
+		  			parts(w_id) := STAGE4
+		  			
+		  		);
+		  		if parts(w_id) = STAGE2 then 
+		  		(
+		  			currColour := MATH`rand(8);
+		  			if w_in3_val <> currColour then
+		  			(
+		  				if floor(GlobalTypes`debugConsoleMsg / 2) mod 2 = 1 then
+		  				IO`printf("%s\tWarehouse order #%s:\t STAGE2 %s%s\n", [GlobalTypes`roundTimeToTheSecond(time),w_id,GlobalTypes`Kind_Int2Str(3),GlobalTypes`Colour_Int2Str(currColour)]);	
+		  				/*get piece <Right>*/
+		  				trynumber.setValue(currTryNumber);
+		  				robot_in1.setValue(bottomOfStack3);
+		  				robot_in2.setValue(	wMemoryBox3 );
+		  			)
+		  			else
+		  			(
+		  				if floor(GlobalTypes`debugConsoleMsg / 2) mod 2 = 1 then
+		  				IO`printf("%s\tWarehouse order #%s:\t STAGE2 %s%s\n", [GlobalTypes`roundTimeToTheSecond(time),w_id,GlobalTypes`Kind_Int2Str(3),GlobalTypes`Colour_Int2Str(currColour)]);	
+		  				
+		  				parts(w_id) := STAGE3
+		  			)
+		  		); 
+		  		if parts(w_id) = STAGE1 then 
+		  		(
+		  		  currColour := MATH`rand(8);
+		  			if w_in2_val <> currColour then
+		  			(
+		  				if floor(GlobalTypes`debugConsoleMsg / 2) mod 2 = 1 then
+		  				IO`printf("%s\tWarehouse order #%s:\t STAGE1 %s%s\n", [GlobalTypes`roundTimeToTheSecond(time),w_id,GlobalTypes`Kind_Int2Str(2),GlobalTypes`Colour_Int2Str(currColour)]);	
+		  				/*get piece <Middle>*/
+		  				trynumber.setValue(currTryNumber);
+		  				robot_in1.setValue(bottomOfStack2);
+		  				robot_in2.setValue(	wMemoryBox2 );
+		  			)
+		  			else
+		  			(
+		  				if floor(GlobalTypes`debugConsoleMsg / 2) mod 2 = 1 then
+		  				IO`printf("%s\tWarehouse order #%s:\t STAGE1 %s%s\n", [GlobalTypes`roundTimeToTheSecond(time),w_id,GlobalTypes`Kind_Int2Str(2),GlobalTypes`Colour_Int2Str(currColour)]);	
+		  				parts(w_id) := STAGE2
+		  			)
+		  		); 
+		  		if parts(w_id) = STAGE0 then 
+		  		(
+		  			currColour := MATH`rand(8);
+		  			if w_in1_val <> currColour then
+		  			(
+		  				if floor(GlobalTypes`debugConsoleMsg / 2) mod 2 = 1 then
+		  				IO`printf("%s\tWarehouse order #%s:\t STAGE0 %s%s\n", [GlobalTypes`roundTimeToTheSecond(time),w_id,GlobalTypes`Kind_Int2Str(1),GlobalTypes`Colour_Int2Str(currColour)]);	
+		  				/*get piece <Left>*/
+		  				trynumber.setValue(currTryNumber);
+		  				robot_in1.setValue(bottomOfStack1);
+		  				robot_in2.setValue(	wMemoryBox1 );
+		  			)
+		  			else
+		  			(
+		  				if floor(GlobalTypes`debugConsoleMsg / 2) mod 2 = 1 then
+		  				IO`printf("%s\tWarehouse order #%s:\t STAGE0 %s%s\n", [GlobalTypes`roundTimeToTheSecond(time),w_id,GlobalTypes`Kind_Int2Str(1),GlobalTypes`Colour_Int2Str(currColour)]);	
+		  				parts(w_id) := STAGE1
+		  			)
+		  		);
+	  	)
+  	)
+  	
+  
+)
+
+thread 
+periodic(2e9,0,0,0)(Step)
+
+end Unit_Warehouse

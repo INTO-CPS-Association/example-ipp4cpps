@@ -1,0 +1,19 @@
+system W_SYSTEM
+
+instance variables
+
+
+public static hwi: HardwareInterface := new HardwareInterface();
+
+public static warehouse: 		Unit_Warehouse    := new Unit_Warehouse(hwi.p_ID, hwi.w_valid,hwi.w_in1,hwi.w_in2,hwi.w_in3,hwi.w_out, hwi.r_ID,hwi.r_in1,hwi.r_in2,hwi.r_out,hwi.perturb_w);
+
+cpu: CPU := new CPU (<FCFS>,1E6);
+
+operations
+
+W_SYSTEM: () ==> W_SYSTEM
+W_SYSTEM() == (
+	cpu.deploy(warehouse);
+)
+
+end W_SYSTEM

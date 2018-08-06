@@ -1,0 +1,19 @@
+system C_SYSTEM
+
+instance variables
+
+
+public static hwi: HardwareInterface := new HardwareInterface();
+
+public static wagon: Unit_Wagon	:= new Unit_Wagon(hwi.START_POS,hwi.pos,hwi.speed,hwi.leaveStation,hwi.pos_front,hwi.pos_behind,hwi.perturb_wag);
+
+cpu: CPU := new CPU (<FCFS>,1E6);
+
+operations
+
+C_SYSTEM: () ==> C_SYSTEM
+C_SYSTEM() == (
+	cpu.deploy(wagon);
+)
+
+end C_SYSTEM

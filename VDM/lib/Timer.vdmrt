@@ -1,0 +1,25 @@
+class Timer
+
+types
+
+public real1 = real
+inv r == r > 0
+
+instance variables
+
+end_time: nat;
+
+operations 
+
+public Timer: real1 ==> Timer
+Timer(et) == 
+	end_time := et * 1e9;
+	
+public Step: () ==> ()
+Step() ==
+	if time >= end_time then World`done := true
+
+thread 
+periodic(1e7,0,0,0)(Step)
+
+end Timer

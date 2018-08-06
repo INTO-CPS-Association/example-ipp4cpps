@@ -1,0 +1,70 @@
+class Unit_Robot
+
+instance variables
+
+tryNumber:	IntPort; /* request ID = try number, conter resides in warehouse*/
+robot_in1: 	IntPort; /* location from where to take the part */
+robot_in2: 	IntPort; /* location where to move the part to */
+robot_out:	IntPort; /* FREE / BUSY */
+
+robotTimer: nat := 0;
+robotStatus: nat := GlobalTypes`FREE;
+previd: nat := 0;
+
+operations
+
+public Unit_Robot: IntPort * IntPort * IntPort * IntPort ==> Unit_Robot
+Unit_Robot(r_ID,r_in1,r_in2,r_out) == (
+	
+	tryNumber  := r_ID;	
+	robot_in1 := r_in1;
+	robot_in2 := r_in2;
+	robot_out := r_out; 
+);
+
+public Step: () ==> ()
+Step() == (
+		dcl currid: nat := tryNumber.getValue();
+		dcl currin1: nat := robot_in1.getValue();
+		dcl currin2: nat := robot_in2.getValue();
+		
+				if currid > 0 and currid <> previd and robotStatus = GlobalTypes`FREE then 
+				(
+					previd := currid;
+					robotStatus := GlobalTypes`BUSY;
+		  		robot_out.setValue(GlobalTypes`BUSY);
+		  		
+		  		/*if floor(GlobalTypes`debugConsoleMsg / 4) mod 2 = 1 then
+		  		IO`printf("%s\tRobotic Arm:\t grabs part %s\n", [GlobalTypes`roundTimeToTheSecond(time),GlobalTypes`Kind_Int2Str(currid)]);	*/	
+		    	
+		    	robotTimer := computeRobotTime(currin1,currin2);
+		  	);
+		  	
+		  	if currid > 0 and robotStatus = GlobalTypes`BUSY then
+		  	(
+			  	if robotTimer = 0 then 
+	  			(
+	  				if floor(GlobalTypes`debugConsoleMsg / 4) mod 2 = 1 then
+	  				IO`printf("%s\tRobotic Arm action:\t moved part %s\n", [GlobalTypes`roundTimeToTheSecond(time),GlobalTypes`Kind_Int2Str(currin1)]);
+	  				
+	  				robotStatus := GlobalTypes`FREE;		
+	  				robot_out.setValue(GlobalTypes`FREE);
+	  				robotTimer := 0;
+	  			) 
+	  			else 
+	  			(
+	  				robotTimer := robotTimer - 1;
+	  			)
+	  		)
+)
+
+thread 
+periodic(1e9,0,0,0)(Step)
+
+functions
+
+private computeRobotTime: int * int -> int
+		computeRobotTime(pos1,pos2) == 4
+
+
+end Unit_Robot
