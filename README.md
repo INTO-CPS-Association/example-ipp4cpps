@@ -13,8 +13,7 @@ The USB-OTG sticks chosen consist of three parts (two lids and the main body). T
 ## Supported Features
 This study supports the following INTO-CPS technologies:
 
-* Overture VDM-RT models (and FMUs)
-* INTO-CPS SysML  
+* Overture VDM-RT models (Discrete-Event models and FMUs) 
 * Co-simulation Engine (COE)
 * Code Generation
 
